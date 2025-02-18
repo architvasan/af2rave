@@ -2,13 +2,19 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
+  - pip
   - python==3.11
-  - pytorch::pytorch
   - openmm>=8
   - pdbfixer
   - mdtraj
   - numpy<2
+  - pandas
   - scikit-learn
   - typer
   - numba
   - natsort
+  - pip:
+    - torch --index-url https://download.pytorch.org/whl/cu118
+    - torchvision
+    - torchaudio
+    #- pytorch::pytorch
