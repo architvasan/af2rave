@@ -16,7 +16,6 @@ class ColabFold(AlphaFoldBase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._queries = None
-
     def mmseq2(self, output_dir=None) -> None:
         '''
         Run MMseqs2 on with server.
@@ -36,7 +35,7 @@ class ColabFold(AlphaFoldBase):
             is_complex=self.is_complex,
             user_agent="colabfold/1.5.5"
             )
-        
+        print("finished cf running stuff") 
         self.set_msa(Path(output_dir) / f"{self._name}.a3m")
 
     def predict(self, output_dir: str = None, msa="8:16", num_seeds=128, num_recycles=1):
@@ -48,28 +47,31 @@ class ColabFold(AlphaFoldBase):
         :param num_seeds: Number of seeds. Each seed will yield 5 structures from 5 models.
         :param num_recycles: Number of recycles
         '''
-
+        print("running prediction!")
         if self._msa is not None:
+            print("msa stuff!")
             self._queries = self._get_query_from_msa(self._msa)
             print("[colabfold] Found MSA input.")
         else:
+            print(f"fasta stuff")
             self._queries, _ = self._get_query_from_fasta(self._fasta_string)
-
+            print(self._queries)
         try:
             max_seq, max_extra_seq = msa.split(":")
         except ValueError as e:
             raise ValueError("Invalid msa argument. Please provide a valid range, e.g. '8:16'") from e
-
+        print(f"almost to prediction part")
         if output_dir is None:
             output_dir = self._output_dir
-
+        print(max_seq)
+        print(max_extra_seq)
         return cf.run(queries=self._queries, 
                       result_dir=output_dir, 
                       is_complex=self.is_complex,
                       num_seeds=num_seeds,
                       num_models=5,
                       num_recycles=num_recycles,
-                      user_agent="colabfold/1.5.5",
+                      #user_agent="colabfold/1.5.5",
                       max_seq=int(max_seq),
                       max_extra_seq=int(max_extra_seq),
                       )
