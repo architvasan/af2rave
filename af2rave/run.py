@@ -40,9 +40,9 @@ class RunAF2RAVE:
     apply rmsd based filter to filter structures that are irrelevant
     """
     def run_rmsd_filter(self):
-        pdb_list = glob.glob(f'{self.output_af2dir}/*pdb') 
+        self.pdb_list = glob.glob(f'{self.output_af2dir}/*pdb') 
         self.feature_selection_cl = featurerv.analysis.FeatureSelection(
-                                   pdb_list,
+                                   self.pdb_list,
                                    self.ref_pdb                 
                                 )
         mask = self.feature_selection_cl.rmsd_filter(
@@ -57,16 +57,32 @@ class RunAF2RAVE:
         if hasattr(self, 'feature_selection_cl'):
             pass 
         else:
-            pdb_list = glob.glob(f'{self.output_af2dir}/*pdb') 
+            self.pdb_list = glob.glob(f'{self.output_af2dir}/*pdb') 
             self.feature_selection_cl = featurerv.analysis.FeatureSelection(
-                                   pdb_list,
+                                   self.pdb_list,
                                    self.ref_pdb                 
                                 ) 
         names_sorted, coeffvars = self.feature_selection_cl.rank_feature(
                                         selection = self.cluster_sel,
                                                )
+        center_ids = self.feature_selection_cl.regular_space_clustering(
+                                                names_sorted,
+                                                min_dist = 0.5
+                                        )
+        self.pdb_centers = [self.feature_selection_cl.pdb_name[cit]\
+                                for cit in center_ids]
 
-    def run_simulation(self):
+    def run_simulation(self,
+                       pdb_cent_list: list[str]| None = None):
+        if pdb_cent_list ==None:
+            pdb_cent_list = self.pdb_centers
+        for pdb_it in pdb_cent_list:
+            simbox_cl = simulationrv.SimulationBox(pdb_it)
+            simbox_cl.create_box()
+            simbox_cl.save_pdb(f'{pdb_it}.updated.pdb')
+            sim_cl = simulationrv.UnbiasedSimulation(f'{pdb_it}.updated.pdb')
+            sim_cl.run(5000)
+
 
 if __name__ == "__main__":
     sequence = 'MQRGKVKWFNNEKGYGFIEVEGGSDVFVHFTAIQGEGFKTLEEGQEVSFEIVQGNRGPQAANVVKE' #@param {type:"string"}
@@ -77,4 +93,8 @@ if __name__ == "__main__":
                 jobname,
                 output_dir,
     )
-    runner.run_colabfold()
+    runner.run_rmsd_filter()
+    runner.run_clustering()
+    runner.run_simulation()
+    
+    print(len(runner.pdb_centers))
